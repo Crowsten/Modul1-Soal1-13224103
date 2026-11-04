@@ -23,7 +23,6 @@ void buka(const char *nama_file, FILE **file) {
         exit(1);
     }
 }
-
 void sort(const char *nama_file, const char *zona_target) {
     FILE *file;
     buka(nama_file, &file);
@@ -39,51 +38,13 @@ void sort(const char *nama_file, const char *zona_target) {
     char id[20];
     char lokasi[50];
     float suhu;
-
+    
     while (fscanf(file, " %[^,],%[^,],%f", id, lokasi, &suhu) == 3) {
         if (strcmp(lokasi, zona_target) == 0) {
-            if (count >= capacity) {
-                capacity *= 2;
-                daftar_planet = (Planet *)realloc(daftar_planet, capacity * sizeof(Planet));
-            }
-            strcpy(daftar_planet[count].id, id);
-            strcpy(daftar_planet[count].lokasi, lokasi);
-            daftar_planet[count].suhu = suhu;
-            count++;
-        }
-        
-        ch = fgetc(file);
-        if (ch == ']') {
-            break;
+            if
         }
     }
-    fclose(file);
-
-    if (count == 0) {
-        free(daftar_planet);
-        return;
-    }
-
-
-    for (int i = 0; i < count - 1; i++) {
-        for (int j = 0; j < count - i - 1; j++) {
-            if (daftar_planet[j].suhu < daftar_planet[j + 1].suhu) {
-                Planet temp = daftar_planet[j];
-                daftar_planet[j] = daftar_planet[j + 1];
-                daftar_planet[j + 1] = temp;
-            }
-        }
-    }
-
-    float total = 0.0;
-    for (int i = 0; i < count; i++) {
-        printf("%s %.2f\n", daftar_planet[i].id, daftar_planet[i].suhu);
-        total += daftar_planet[i].suhu;
-    }
-
-    float avg = total / count;
-    printf("AVERAGE %.2f\n", avg);
-    free(daftar_planet);
+    
 }
 
 void rata_rata(const char *nama_file, const char *zona_target) {
@@ -122,3 +83,15 @@ int main() {
 
     return 0;
 }
+
+// Input
+// file1.txt Jezero
+// [S01,Jezero,-15.20
+// S02,Gale,-20.50
+// S03,Jezero,-10.40
+// S04,Jezero,-18.00]
+// Output
+// S03 -10.40
+// S01 -15.20
+// S04 -18.00
+// AVERAGE -14.53
