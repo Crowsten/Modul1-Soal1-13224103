@@ -7,138 +7,151 @@
  * Deskripsi : Penjelajah Planet 
  * */ 
 
+// Referensi
+// https://www.w3schools.com/c/c_files_read.php
+// https://www.geeksforgeeks.org/c/c-program-to-read-contents-of-whole-file/
+// https://stackoverflow.com/questions/12048576/how-to-find-eof-through-fscanf
+// https://www.geeksforgeeks.org/c/c-bubble-sort/
+// https://stackoverflow.com/questions/75986182/i-want-to-use-bubblesort-on-a-text-file-to-sort-a-set-of-randomised-numbers
+// https://www.geeksforgeeks.org/c/basics-file-handling-c/
+// https://www.geeksforgeeks.org/c/strcmp-in-c/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct {
+typedef struct{
     char id[20];
-    char zona[50];
-    float suhu;
-} Sensor;
+    char lokasi[20];
+    float suhu;   
+}Planet;
 
-void tukar(Sensor *a, Sensor *b) {
-    Sensor sementara = *a;
+void buka(const char *nama_file, FILE **file) {
+    *file = fopen(nama_file, "r");
+    if (!*file) {
+        exit(1);
+    }
+}
+
+void bersihkan_baris(char *baris) {
+    int baca = 0;
+    int tulis = 0;
+
+    while (baris[baca] != '\0') {
+        if (baris[baca] != '[' && baris[baca] != ']') {
+            baris[tulis++] = baris[baca];
+        }
+        baca++;
+    }
+    baris[tulis] = '\0';
+
+    while (tulis > 0 && (baris[tulis - 1] == '\n' ||
+                         baris[tulis - 1] == '\r' ||
+                         baris[tulis - 1] == ' ' ||
+                         baris[tulis - 1] == '\t')) {
+        baris[--tulis] = '\0';
+    }
+}
+
+void tukar(Planet *a, Planet *b) {
+    Planet sementara = *a;
     *a = *b;
     *b = sementara;
 }
 
-void urutkan(Sensor data[], size_t jumlah) {
-    for (size_t i = 0; i < jumlah; i++) {
-        for (size_t j = i + 1; j < jumlah; j++) {
-            if (data[i].suhu < data[j].suhu ||
-                (data[i].suhu == data[j].suhu &&
-                 strcmp(data[i].id, data[j].id) > 0)) {
-                tukar(&data[i], &data[j]);
-            }
-        }
-    }
-}
+void sort(const char *nama_file, const char *zona_target) {
+    FILE *file;
+    buka(nama_file, &file);
 
-int spasi(char karakter) {
-    return karakter == ' ' || karakter == '\t' || karakter == '\n' ||
-           karakter == '\r' || karakter == '\v' || karakter == '\f';
-}
-
-char *trim(char *teks) {
-    while (spasi(*teks)) {
-        teks++;
-    }
-
-    char *akhir = teks + strlen(teks);
-    while (akhir > teks && spasi(akhir[-1])) {
-        *--akhir = '\0';
-    }
-    return teks;
-}
-
-int main(void) {
-    char nama_file[256];
-    char zona_target[50];
-    if (scanf("%s %s", nama_file, zona_target) != 2) {
-        return 1;
-    }
-
-    FILE *file = fopen(nama_file, "r");
-    if (file == NULL) {
-        return 1;
-    }
-
-    Sensor *data = NULL;
-    size_t jumlah = 0;
-    size_t kapasitas = 0;
+    Planet *daftar_planet = NULL;
+    int count = 0;
+    int capacity = 0;
     char baris[256];
 
     while (fgets(baris, sizeof(baris), file) != NULL) {
-        char *isi = trim(baris);
-        if (*isi == '[') {
-            isi = trim(isi + 1);
-        }
+        Planet sensor;
+        bersihkan_baris(baris);
 
-        size_t panjang = strlen(isi);
-        if (panjang > 0 && isi[panjang - 1] == ']') {
-            isi[--panjang] = '\0';
-            isi = trim(isi);
-        }
-        if (*isi == '\0') {
-            continue;
-        }
-
-        Sensor sensor;
-        char sisa;
-        if (sscanf(isi, " %19[^,],%49[^,],%f %c",
-            sensor.id, sensor.zona, &sensor.suhu, &sisa) != 3) {
-            free(data);
-            fclose(file);
-            return 1;
-        }
-
-        char *id = trim(sensor.id);
-        char *zona = trim(sensor.zona);
-        if (id != sensor.id) {
-            memmove(sensor.id, id, strlen(id) + 1);
-        }
-        if (zona != sensor.zona) {
-            memmove(sensor.zona, zona, strlen(zona) + 1);
-        }
-
-        if (strcmp(sensor.zona, zona_target) == 0) {
-            if (jumlah == kapasitas) {
-                size_t kapasitas_baru = kapasitas == 0 ? 8 : kapasitas * 2;
-                Sensor *data_baru = realloc(data, kapasitas_baru * sizeof(*data));
-                if (data_baru == NULL) {
-                    free(data);
+        if (sscanf(baris, " %19[^,],%19[^,],%f",
+                   sensor.id, sensor.lokasi, &sensor.suhu) == 3 &&
+            strcmp(sensor.lokasi, zona_target) == 0) {
+            if (count == capacity) {
+                int kapasitas_baru = capacity == 0 ? 10 : capacity * 2;
+                Planet *daftar_baru = realloc(
+                    daftar_planet, kapasitas_baru * sizeof(Planet));
+                if (daftar_baru == NULL) {
+                    free(daftar_planet);
                     fclose(file);
-                    return 1;
+                    exit(1);
                 }
-                data = data_baru;
-                kapasitas = kapasitas_baru;
+                daftar_planet = daftar_baru;
+                capacity = kapasitas_baru;
             }
-            data[jumlah++] = sensor;
+            daftar_planet[count++] = sensor;
         }
     }
 
-    if (ferror(file)) {
-        free(data);
-        fclose(file);
-        return 1;
-    }
     fclose(file);
 
-    if (jumlah == 0) {
-        puts("999");
-        free(data);
-        return 0;
+    if (count == 0) {
+        printf("999\n");
+        free(daftar_planet);
+        return;
     }
 
-    urutkan(data, jumlah);
-    double total = 0.0;
-    for (size_t i = 0; i < jumlah; i++) {
-        printf("%s %.2f\n", data[i].id, data[i].suhu);
-        total += data[i].suhu;
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            if (daftar_planet[j].suhu < daftar_planet[j + 1].suhu ||
+                (daftar_planet[j].suhu == daftar_planet[j + 1].suhu &&
+                 strcmp(daftar_planet[j].id, daftar_planet[j + 1].id) > 0)) {
+                tukar(&daftar_planet[j], &daftar_planet[j + 1]);
+            }
+        }
     }
-    printf("AVERAGE %.2f\n", total / jumlah);
 
-    free(data);
+    for (int i = 0; i < count; i++) {
+        printf("%s %.2f\n", daftar_planet[i].id, daftar_planet[i].suhu);
+    }
+
+    free(daftar_planet);
+}
+
+void rata_rata(const char *nama_file, const char *zona_target) {
+    FILE *file;
+    buka(nama_file, &file);
+
+    char baris[256];
+    int count = 0;
+    float total = 0.0;
+
+    while (fgets(baris, sizeof(baris), file) != NULL) {
+        Planet sensor;
+        bersihkan_baris(baris);
+
+        if (sscanf(baris, " %19[^,],%19[^,],%f",
+                   sensor.id, sensor.lokasi, &sensor.suhu) == 3 &&
+            strcmp(sensor.lokasi, zona_target) == 0) {
+            total += sensor.suhu;
+            count++;
+        }
+    }
+
+    if (count > 0) {
+        float avg = total / count;
+        printf("AVERAGE %.2f\n", avg);
+    }
+    fclose(file);
+}
+
+int main(void) {
+    char nama_file[100];
+    char zona_target[100];
+
+    if (scanf("%s %s", nama_file, zona_target) != 2) {
+        return 1;
+    }
+    sort(nama_file, zona_target);
+    rata_rata(nama_file, zona_target);
+
     return 0;
 }
