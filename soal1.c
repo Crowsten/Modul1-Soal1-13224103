@@ -11,87 +11,134 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct{
+typedef struct {
     char id[20];
-    char lokasi[20];
-    float suhu;   
-}Planet;
-
-void buka(const char *nama_file, FILE **file) {
-    *file = fopen(nama_file, "r");
-    if (!*file) {
-        exit(1);
-    }
-}
-void sort(const char *nama_file, const char *zona_target) {
-    FILE *file;
-    buka(nama_file, &file);
-
-    Planet *daftar_planet = NULL;
-    int count = 0;
-    int capacity = 10;
-    daftar_planet = (Planet *)malloc(capacity * sizeof(Planet));
-
-    char ch;
-    while ((ch = fgetc(file)) != EOF && ch != '[');
-
-    char id[20];
-    char lokasi[50];
+    char zona[50];
     float suhu;
-    
-    while (fscanf(file, " %[^,],%[^,],%f", id, lokasi, &suhu) == 3) {
-        if (strcmp(lokasi, zona_target) == 0) {
-            if
-        }
-    }
-    
+} Sensor;
+
+void tukar(Sensor *a, Sensor *b) {
+    Sensor sementara = *a;
+    *a = *b;
+    *b = sementara;
 }
 
-void rata_rata(const char *nama_file, const char *zona_target) {
-    FILE *file;
-    buka(nama_file, &file);
+void urutkan(Sensor data[], size_t jumlah) {
+    for (size_t i = 0; i < jumlah; i++) {
+        for (size_t j = i + 1; j < jumlah; j++) {
+            if (data[i].suhu < data[j].suhu ||
+                (data[i].suhu == data[j].suhu &&
+                 strcmp(data[i].id, data[j].id) > 0)) {
+                tukar(&data[i], &data[j]);
+            }
+        }
+    }
+}
 
-    char id[20];
-    char lokasi[50];
-    float suhu;
-    
-    int count = 0;
-    float total = 0.0;
+int spasi(char karakter) {
+    return karakter == ' ' || karakter == '\t' || karakter == '\n' ||
+           karakter == '\r' || karakter == '\v' || karakter == '\f';
+}
 
-    while (fscanf(file, " %[^,],%[^,],%f", id, lokasi, &suhu) == 3) {
-        if (strcmp(lokasi, zona_target) == 0) {
-            total += suhu;
-            count++;
+char *trim(char *teks) {
+    while (spasi(*teks)) {
+        teks++;
+    }
+
+    char *akhir = teks + strlen(teks);
+    while (akhir > teks && spasi(akhir[-1])) {
+        *--akhir = '\0';
+    }
+    return teks;
+}
+
+int main(void) {
+    char nama_file[256];
+    char zona_target[50];
+    if (scanf("%s %s", nama_file, zona_target) != 2) {
+        return 1;
+    }
+
+    FILE *file = fopen(nama_file, "r");
+    if (file == NULL) {
+        return 1;
+    }
+
+    Sensor *data = NULL;
+    size_t jumlah = 0;
+    size_t kapasitas = 0;
+    char baris[256];
+
+    while (fgets(baris, sizeof(baris), file) != NULL) {
+        char *isi = trim(baris);
+        if (*isi == '[') {
+            isi = trim(isi + 1);
+        }
+
+        size_t panjang = strlen(isi);
+        if (panjang > 0 && isi[panjang - 1] == ']') {
+            isi[--panjang] = '\0';
+            isi = trim(isi);
+        }
+        if (*isi == '\0') {
+            continue;
+        }
+
+        Sensor sensor;
+        char sisa;
+        if (sscanf(isi, " %19[^,],%49[^,],%f %c",
+            sensor.id, sensor.zona, &sensor.suhu, &sisa) != 3) {
+            free(data);
+            fclose(file);
+            return 1;
+        }
+
+        char *id = trim(sensor.id);
+        char *zona = trim(sensor.zona);
+        if (id != sensor.id) {
+            memmove(sensor.id, id, strlen(id) + 1);
+        }
+        if (zona != sensor.zona) {
+            memmove(sensor.zona, zona, strlen(zona) + 1);
+        }
+
+        if (strcmp(sensor.zona, zona_target) == 0) {
+            if (jumlah == kapasitas) {
+                size_t kapasitas_baru = kapasitas == 0 ? 8 : kapasitas * 2;
+                Sensor *data_baru = realloc(data, kapasitas_baru * sizeof(*data));
+                if (data_baru == NULL) {
+                    free(data);
+                    fclose(file);
+                    return 1;
+                }
+                data = data_baru;
+                kapasitas = kapasitas_baru;
+            }
+            data[jumlah++] = sensor;
         }
     }
 
-    if (count > 0) {
-        float avg = total / count;
-        printf("AVERAGE %s: %.2f\n", zona_target, avg);
+    if (ferror(file)) {
+        free(data);
+        fclose(file);
+        return 1;
     }
     fclose(file);
-}
 
-int main() {
-    char nama_file[100];
-    char zona_target[100];
+    if (jumlah == 0) {
+        puts("999");
+        free(data);
+        return 0;
+    }
 
-    scanf("%s", nama_file);
-    scanf("%s", zona_target);
-    sort(nama_file, zona_target);
-    rata_rata(nama_file, zona_target);
+    urutkan(data, jumlah);
+    double total = 0.0;
+    for (size_t i = 0; i < jumlah; i++) {
+        printf("%s %.2f\n", data[i].id, data[i].suhu);
+        total += data[i].suhu;
+    }
+    printf("AVERAGE %.2f\n", total / jumlah);
 
+    free(data);
     return 0;
 }
-
-// Input
-// file1.txt Jezero
-// [S01,Jezero,-15.20
-// S02,Gale,-20.50
-// S03,Jezero,-10.40
-// S04,Jezero,-18.00]
-// Output
-// S03 -10.40
-// S01 -15.20
-// S04 -18.00
-// AVERAGE -14.53
