@@ -1,0 +1,192 @@
+name: Autograding Tests
+
+on:
+  - push
+  - repository_dispatch
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Case 01 - File01
+        id: case-01
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 01 - radiasi tinggi
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file1.txt Jezero"
+          expected-output: |
+            S03 -10.40
+            S01 -15.20
+            S04 -18.00
+            AVERAGE -14.53
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 02 - suhu karantina
+        id: case-02
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 02 - File02
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file2.txt Gale"
+          expected-output: |
+            S02 45.25
+            S01 30.50
+            S03 12.00
+            AVERAGE 29.25
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 03 - File03
+        id: case-03
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 03 - File03
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file3.txt Hellas"
+          expected-output: |
+            S09 10.00
+            S01 -5.00
+            S02 -5.00
+            S05 -5.00
+            AVERAGE -1.25
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 04 - File04
+        id: case-04
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 04 - izin satu normal
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file4.txt Olympus"
+          expected-output: |
+            S01 -60.00
+            AVERAGE -60.00
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 05 - File05
+        id: case-05
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 05 - izin dua lolos batas bawah jam
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file5.txt Tharsis"
+          expected-output: "999"
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 06 - File06
+        id: case-06
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 06 - File06
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file6.txt Jezero"
+          expected-output: |
+            S03 -10.40
+            S01 -15.20
+            AVERAGE -12.80
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 07 - File07 (case sensitive)
+        id: case-07
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 07 - izin dua pemeriksaan karena radiasi
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file7.txt jezero"
+          expected-output: |
+            S02 -12.00
+            AVERAGE -12.00
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 08 - File08
+        id: case-08
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 08 - izin dua pemeriksaan karena jam
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file8.txt Jezero"
+          expected-output: |
+            S01 -10.00
+            S03 -20.00
+            AVERAGE -15.00
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 09 - File09
+        id: case-09
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 09 - izin tiga lolos
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file9.txt Jezero"
+          expected-output: "999"
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Case 10 - File10
+        id: case-10
+        uses: classroom-resources/autograding-io-grader@v1
+        with:
+          test-name: Case 10 - izin tiga gagal
+          setup-command: gcc -std=c11 -O2 -Wall -Wextra -o soal1 soal1.c
+          command: ./soal1
+          input: "file10.txt Gale"
+          expected-output: |
+            S03 0.50
+            S01 0.00
+            S04 0.00
+            S02 -0.50
+            AVERAGE 0.00
+          comparison-method: exact
+          timeout: 2
+          max-score: 5
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          CASE-01_RESULTS: "${{steps.case-01.outputs.result}}"
+          CASE-02_RESULTS: "${{steps.case-02.outputs.result}}"
+          CASE-03_RESULTS: "${{steps.case-03.outputs.result}}"
+          CASE-04_RESULTS: "${{steps.case-04.outputs.result}}"
+          CASE-05_RESULTS: "${{steps.case-05.outputs.result}}"
+          CASE-06_RESULTS: "${{steps.case-06.outputs.result}}"
+          CASE-07_RESULTS: "${{steps.case-07.outputs.result}}"
+          CASE-08_RESULTS: "${{steps.case-08.outputs.result}}"
+          CASE-09_RESULTS: "${{steps.case-09.outputs.result}}"
+          CASE-10_RESULTS: "${{steps.case-10.outputs.result}}"
+        with:
+          runners: case-01,case-02,case-03,case-04,case-05,case-06,case-07,case-08,case-09,case-10

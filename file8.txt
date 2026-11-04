@@ -1,0 +1,3 @@
+S01,Jezero,-10.00
+S02,Jezero_Utara,-5.00
+S03,Jezero,-20.00

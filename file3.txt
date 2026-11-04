@@ -1,0 +1,4 @@
+S05,Hellas,-5.00
+S02,Hellas,-5.00
+S09,Hellas,10.00
+S01,Hellas,-5.00

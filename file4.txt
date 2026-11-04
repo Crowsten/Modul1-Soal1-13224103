@@ -1,0 +1,3 @@
+S01,Olympus,-60.00
+S02,Gale,-20.00
+S03,Jezero,-10.00

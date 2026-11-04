@@ -1,0 +1,4 @@
+S01,Jezero,-15.20
+S02,Gale,-20.50
+S03,Jezero,-10.40
+S04,Jezero,-18.00
